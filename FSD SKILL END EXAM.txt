@@ -1,0 +1,98 @@
+package com.klef.fsad.exam;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+// ================= MAIN APPLICATION =================
+@SpringBootApplication
+public class FsadEndExamApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(FsadEndExamApplication.class, args);
+    }
+}
+
+// ================= ENTITY =================
+@Entity
+@Table(name = "booking_table")
+class Booking {
+
+    @Id
+    private Long bookingId; // MUST be manually provided
+
+    private String name;
+    private String date;
+    private String status;
+    private String description;
+
+    public Booking() {}
+
+    public Long getBookingId() { return bookingId; }
+    public void setBookingId(Long bookingId) { this.bookingId = bookingId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+}
+
+// ================= REPOSITORY =================
+interface BookingRepository extends JpaRepository<Booking, Long> {}
+
+// ================= SERVICE =================
+@Service
+class BookingService {
+
+    @Autowired
+    private BookingRepository repo;
+
+    public Booking addBooking(Booking booking) {
+        if (booking.getBookingId() == null) {
+            throw new RuntimeException("Booking ID cannot be null");
+        }
+        return repo.save(booking);
+    }
+
+    public String deleteBooking(Long id) {
+        if (!repo.existsById(id)) {
+            return "Booking not found";
+        }
+        repo.deleteById(id);
+        return "Booking deleted successfully";
+    }
+}
+
+// ================= CONTROLLER =================
+@RestController
+@RequestMapping("/booking")
+class BookingController {
+
+    @Autowired
+    private BookingService service;
+
+    // POST → Add Booking
+    @PostMapping("/add")
+    public Booking addBooking(@RequestBody Booking booking) {
+        return service.addBooking(booking);
+    }
+
+    // DELETE → Remove Booking
+    @DeleteMapping("/delete/{id}")
+    public String deleteBooking(@PathVariable Long id) {
+        return service.deleteBooking(id);
+    }
+}
